@@ -79,9 +79,13 @@ def imprimir_grade(estado, titulo=""):
 
 def resolver(entrada):
     """Função principal que resolve o puzzle e exibe a solução."""
-    # Processar entrada
+    # Processar entrada — aceita "123456780" ou "1 2 3 4 5 6 7 8 0"
     try:
-        numeros = list(map(int, entrada.strip().split()))
+        clean = entrada.strip()
+        if len(clean) == 9 and clean.isdigit():
+            numeros = [int(c) for c in clean]   # formato colado
+        else:
+            numeros = list(map(int, clean.split()))  # formato com espaços
         if len(numeros) != 9 or sorted(numeros) != list(range(9)):
             raise ValueError("Entrada inválida.")
         estado_inicial = tuple(numeros)
@@ -126,8 +130,9 @@ def resolver(entrada):
 
 if __name__ == "__main__":
     print("8 PUZZLE - BUSCA EM LARGURA (BFS)")
-    print("Informe o estado inicial (9 números de 0 a 8, separados por espaço):")
-    print("Exemplo: 1 2 3 4 5 6 7 0 8")
+    print("Informe o estado inicial:")
+    print("  Formato colado : 123456708")
+    print("  Formato espaço : 1 2 3 4 5 6 7 0 8")
     print()
     entrada = input("Estado inicial: ")
     resolver(entrada)

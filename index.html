@@ -366,15 +366,15 @@ html, body {
 
   <div class="toolbar">
     <span>Estado inicial:</span>
-    <input class="xp-input" type="text" id="inputState" value="1 2 3 4 5 6 7 0 8" placeholder="0–8 separados por espaço">
+    <input class="xp-input" type="text" id="inputState" value="123456708" placeholder="Ex: 123456708 ou 1 2 3 4 5 6 7 0 8">
     <select class="xp-select" id="presetSel" onchange="loadPreset(this.value)">
       <option value="">— Exemplos —</option>
-      <option value="1 2 3 4 5 6 7 0 8">Fácil (1 mov)</option>
-      <option value="1 2 3 4 0 5 7 8 6">Simples (2 mov)</option>
-      <option value="0 1 2 4 5 3 7 8 6">Médio (5 mov)</option>
-      <option value="1 6 2 5 0 3 4 7 8">Médio (8 mov)</option>
-      <option value="2 8 3 1 6 4 7 0 5">Difícil (13 mov)</option>
-      <option value="8 6 7 2 5 4 3 0 1">Muito difícil</option>
+      <option value="123456708">Fácil (1 mov)</option>
+      <option value="123405786">Simples (2 mov)</option>
+      <option value="012453786">Médio (5 mov)</option>
+      <option value="162503478">Médio (8 mov)</option>
+      <option value="283164705">Difícil (13 mov)</option>
+      <option value="867254301">Muito difícil</option>
     </select>
     <div class="sep-v"></div>
     <button class="xp-btn primary" onclick="solve()">▶ Resolver</button>
@@ -513,13 +513,21 @@ function bfs(initial) {
   return null;
 }
 
+function parseInput(val) {
+  const clean = val.trim();
+  // Formato colado: "123456780" (exatamente 9 dígitos sem espaço)
+  if (/^\d{9}$/.test(clean)) return clean.split('').map(Number);
+  // Formato com espaços: "1 2 3 4 5 6 7 8 0"
+  return clean.split(/\s+/).map(Number);
+}
+
 function solve() {
   stopPlay();
-  const raw = document.getElementById('inputState').value.trim().split(/\s+/).map(Number);
+  const raw = parseInput(document.getElementById('inputState').value);
   setLog('⏳ Executando BFS...', '#000080');
   setProgress(0);
   if (raw.length!==9||raw.some(isNaN)||[...raw].sort((a,b)=>a-b).join('')!=='012345678') {
-    setLog('❌ Entrada inválida! Use 9 números de 0 a 8.', '#cc0000');
+    setLog('❌ Entrada inválida! Use "123456780" ou "1 2 3 4 5 6 7 8 0".', '#cc0000');
     setStatus('Erro na entrada','BFS | Python 3');
     return;
   }
