@@ -132,7 +132,7 @@ def manhattan(estado):
     """
     distancia = 0
     for idx, val in enumerate(estado):
-        if val != 0:  # ignora o espaço vazio
+        if val != 0:
             linha_atual, col_atual = divmod(idx, 3)
             linha_alvo,  col_alvo  = divmod(POSICAO_ALVO[val], 3)
             distancia += abs(linha_atual - linha_alvo) + abs(col_atual - col_alvo)
@@ -155,35 +155,25 @@ def astar(estado_inicial):
     if estado_inicial == ESTADO_FINAL:
         return [], 0
 
-    # Cada entrada da heap: (f, g, estado, caminho)
-    # f = g + h  →  custo estimado total
-    # g = custo real até agora (número de movimentos)
     h_inicial = manhattan(estado_inicial)
     heap = [(h_inicial, 0, estado_inicial, [])]
-
-    # Guarda o menor g conhecido para cada estado visitado
     visitados = {}
     total_testados = 0
 
     while heap:
         f, g, estado_atual, caminho = heapq.heappop(heap)
 
-        # Se já processamos esse estado com custo menor, descarta
         if estado_atual in visitados and visitados[estado_atual] <= g:
             continue
         visitados[estado_atual] = g
         total_testados += 1
 
         for novo_estado, movimento in gerar_movimentos(estado_atual):
-            novo_g = g + 1  # cada movimento tem custo 1
-
-            # Poda: só expande se não foi visitado ou se achou caminho mais curto
+            novo_g = g + 1
             if novo_estado not in visitados or visitados[novo_estado] > novo_g:
                 novo_caminho = caminho + [(movimento, novo_estado)]
-
                 if novo_estado == ESTADO_FINAL:
                     return novo_caminho, total_testados + 1
-
                 novo_h = manhattan(novo_estado)
                 novo_f = novo_g + novo_h
                 heapq.heappush(heap, (novo_f, novo_g, novo_estado, novo_caminho))
@@ -229,6 +219,7 @@ def resolver(entrada):
             raise ValueError("Entrada inválida.")
 
         estado_inicial = tuple(numeros)
+
     except Exception as e:
         print(f"Erro na entrada: {e}")
         return
@@ -250,13 +241,13 @@ def resolver(entrada):
     caminho_bfs, testados_bfs = bfs(estado_inicial)
     tempo_bfs = time.time() - t0
 
-    # ── A* ────────────────────────────────────────────────
+    # ── A* ─────────────────────────────────────────────────
     print("[A* ] Buscando solução...")
     t0 = time.time()
     caminho_astar, testados_astar = astar(estado_inicial)
     tempo_astar = time.time() - t0
 
-    # ── Comparativo ───────────────────────────────────────
+    # ── Comparativo ────────────────────────────────────────
     print("\n" + "=" * 42)
     print("  COMPARATIVO: BFS vs A* (Manhattan)")
     print("=" * 42)
