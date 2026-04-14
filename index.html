@@ -2,400 +2,125 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>8 Puzzle Solver v2.0 - BFS + A*</title>
+<title>AI Labs — Windows XP</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
   --face: #ece9d8;
-  --face-dark: #d4d0c8;
-  --highlight: #ffffff;
-  --shadow: #808080;
   --dark-shadow: #404040;
+  --shadow: #808080;
+  --highlight: #ffffff;
   --win-blue: #0055ea;
-  --text: #000000;
 }
-
 html, body {
-  width: 100%; min-height: 100vh;
-  background: #3a6ea5;
+  width: 100%; height: 100vh;
+  background: radial-gradient(ellipse at 50% 40%, #4a82c0 0%, #244e8a 100%);
   font-family: Tahoma, 'MS Sans Serif', Geneva, sans-serif;
   font-size: 11px;
-  display: flex; flex-direction: column;
-  align-items: center;
-  padding: 16px; gap: 10px; padding-bottom: 50px;
+  overflow: hidden;
+  user-select: none;
 }
+.desktop {
+  width: 100%;
+  height: calc(100vh - 30px);
+  padding: 16px 12px;
+  display: flex; flex-direction: column; flex-wrap: wrap;
+  align-content: flex-start; gap: 8px;
+}
+.desk-icon {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; padding: 5px 6px;
+  border: 1px solid transparent; border-radius: 3px; width: 76px;
+}
+.desk-icon:hover   { border-color: rgba(160,190,255,0.6); background: rgba(58,110,165,0.45); }
+.desk-icon.selected{ border-color: rgba(160,190,255,0.9); background: rgba(58,110,165,0.65); }
+.desk-icon-img { font-size: 36px; filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.55)); line-height: 1; }
+.desk-icon-lbl { color: white; font-size: 11px; text-shadow: 1px 1px 3px #000, -1px -1px 2px #000; text-align: center; line-height: 1.3; word-break: break-word; }
 
-.desktop-bar { width: 100%; max-width: 780px; display: flex; gap: 12px; padding: 0 4px; }
-.desk-icon { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 4px; border: 1px solid transparent; border-radius: 2px; }
-.desk-icon:hover { border-color: #88aadd; background: rgba(58,110,165,0.4); }
-.desk-icon-img { font-size: 28px; filter: drop-shadow(1px 1px 1px #0008); }
-.desk-icon-lbl { color: white; font-size: 10px; text-shadow: 1px 1px 2px #000, -1px -1px 2px #000; text-align: center; }
-
-.window { background: var(--face); border: 2px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); box-shadow: 2px 2px 8px rgba(0,0,0,0.6); width: 100%; max-width: 780px; }
-
-.titlebar { background: linear-gradient(180deg, #2b5fce 0%, #3a87d4 8%, #2166c4 50%, #1e5bb8 51%, #2a7dd4 100%); padding: 3px 5px; display: flex; align-items: center; gap: 5px; height: 26px; user-select: none; }
-.titlebar-icon { font-size: 14px; flex-shrink: 0; }
-.titlebar-text { flex: 1; color: white; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-.titlebar-btns { display: flex; gap: 2px; }
-.tb-btn { width: 20px; height: 20px; background: linear-gradient(180deg, #f4f0e4 0%, #d0ccc0 100%); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; }
-.tb-btn:hover { filter: brightness(1.1); }
-.tb-btn.close { background: linear-gradient(180deg, #e05050 0%, #b82020 100%); color: white; }
-
-.menubar { background: var(--face); border-bottom: 1px solid var(--face-dark); padding: 1px 4px; display: flex; gap: 0; }
-.menu-item { padding: 2px 8px; cursor: pointer; border-radius: 2px; }
-.menu-item:hover { background: var(--win-blue); color: white; }
-
-.toolbar { background: linear-gradient(180deg, #f4f1e8 0%, #e0ddd4 100%); border-bottom: 1px solid var(--shadow); padding: 4px 8px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-
-.tabs-bar { background: var(--face-dark); border-bottom: 2px solid var(--shadow); display: flex; padding: 4px 8px 0; gap: 2px; }
-.tab { padding: 4px 16px 3px; border: 1px solid var(--shadow); border-bottom: none; border-radius: 3px 3px 0 0; cursor: pointer; background: linear-gradient(180deg, #d8d4c8, #c4c0b4); font-size: 11px; font-weight: bold; position: relative; bottom: -1px; color: #555; }
-.tab:hover { background: linear-gradient(180deg, #e8e4d8, #d8d4c8); color: #000; }
-.tab.active { background: var(--face); border-color: var(--shadow); border-bottom-color: var(--face); color: #000; z-index: 1; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-.xp-btn { background: linear-gradient(180deg, #f4f2ec 0%, #e8e4d8 40%, #d8d4c8 41%, #e4e0d4 100%); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); padding: 3px 10px; font-family: Tahoma, sans-serif; font-size: 11px; cursor: pointer; border-radius: 3px; white-space: nowrap; box-shadow: inset 1px 1px 0 #ffffffb0; }
-.xp-btn:hover { background: linear-gradient(180deg, #fffce8 0%, #ffe8a0 40%, #f0d870 41%, #ffe0a0 100%); border-color: #b09030; }
-.xp-btn:active { padding: 4px 9px 2px 11px; filter: brightness(0.95); }
-.xp-btn.primary { background: linear-gradient(180deg, #78c878 0%, #50b050 40%, #38a038 41%, #60c060 100%); border-color: #206020; color: white; font-weight: bold; text-shadow: 1px 1px #0006; }
-.xp-btn.primary:hover { filter: brightness(1.08); }
-
-.sep-v { width: 1px; height: 20px; margin: 0 3px; background: linear-gradient(180deg, transparent, var(--shadow), transparent); }
-
-.xp-input { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: white; padding: 2px 6px; font-family: Tahoma, sans-serif; font-size: 11px; outline: none; flex: 1; min-width: 100px; box-shadow: inset 1px 1px 2px #00000020; }
-.xp-input:focus { outline: 2px solid #3a7fd4; outline-offset: -2px; }
-.xp-select { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: white; font-family: Tahoma, sans-serif; font-size: 11px; padding: 1px 4px; height: 21px; outline: none; }
-
-.content { padding: 8px; display: grid; grid-template-columns: auto 1fr; gap: 8px; }
-@media (max-width: 540px) { .content { grid-template-columns: 1fr; } }
-
-.compare-content { padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-@media (max-width: 540px) { .compare-content { grid-template-columns: 1fr; } }
-
-.inset { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: var(--face); padding: 0; box-shadow: inset 1px 1px 0 #ffffff80; }
-.inset-body { padding: 8px; }
-.inset-title { background: linear-gradient(180deg, #2b5fce, #1a4fa0); color: white; font-size: 11px; font-weight: bold; padding: 2px 8px; text-shadow: 1px 1px #0004; }
-.inset-title.astar-title { background: linear-gradient(180deg, #a03820, #7a2810); }
-
-.puzzle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; width: 180px; height: 180px; }
-.tile { background: linear-gradient(135deg, #fff 0%, #e8e8e8 35%, #c8c8c8 70%, #ddd 100%); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); display: flex; align-items: center; justify-content: center; font-family: 'VT323', monospace; font-size: 2.5rem; color: #1a3a9a; text-shadow: 1px 1px #fff, 2px 2px #0003; border-radius: 2px; box-shadow: inset 1px 1px 0 #ffffffc0, 2px 2px 4px #00000030; transition: background 0.15s; }
-.tile.empty { background: #c0bdb0; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); box-shadow: inset 2px 2px 3px #00000040; }
-
-.puzzle-grid-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 120px; height: 120px; }
-.tile-mini { background: linear-gradient(135deg, #fff 0%, #e0e0e0 50%, #ccc 100%); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); display: flex; align-items: center; justify-content: center; font-family: 'VT323', monospace; font-size: 1.8rem; color: #1a3a9a; border-radius: 2px; }
-.tile-mini.empty { background: #c0bdb0; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); }
-
-.stats-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-.stats-table td { padding: 2px 6px; }
-.stats-table tr:nth-child(odd) { background: rgba(0,0,0,0.04); }
-.stats-table .lbl { font-weight: bold; color: #333; white-space: nowrap; }
-.stats-table .val { font-family: 'VT323', monospace; font-size: 1.3rem; color: #0000cc; }
-
-.progress-wrap { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: white; height: 14px; overflow: hidden; margin: 4px 0; }
-.progress-bar { height: 100%; width: 0%; background: linear-gradient(180deg, #72dc72 0%, #40b840 45%, #28a028 46%, #58c858 100%); transition: width 0.4s; position: relative; overflow: hidden; }
-.progress-bar.astar-bar { background: linear-gradient(180deg, #f09050 0%, #c86020 45%, #a04010 46%, #e07030 100%); }
-.progress-bar::after { content: ''; position: absolute; top: 0; left: -50%; width: 40px; height: 100%; background: linear-gradient(90deg, transparent, #ffffff60, transparent); animation: pgshim 1.5s infinite; }
-@keyframes pgshim { from{left:-50px} to{left:calc(100% + 50px)} }
-
-.move-display { background: #000080; border: 2px inset #808080; padding: 5px 8px; margin-top: 6px; font-family: 'VT323', monospace; font-size: 1.7rem; color: #00ff00; text-align: center; letter-spacing: 3px; text-shadow: 0 0 10px #00ff00aa; min-height: 42px; display: flex; align-items: center; justify-content: center; }
-
-.steps-outer { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: white; height: 88px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: #b0ac9c #e0dcd0; }
-.steps-inner { display: flex; gap: 4px; padding: 4px; width: max-content; }
-.step-thumb { cursor: pointer; padding: 2px; border: 2px solid transparent; border-radius: 2px; flex: 0 0 auto; }
-.step-thumb:hover { border-color: #0000cc; }
-.step-thumb.active { border-color: var(--win-blue); background: #cce0ff; }
-.mini-grid { display: grid; grid-template-columns: repeat(3, 18px); gap: 1px; }
-.mini-tile { width: 18px; height: 18px; background: linear-gradient(135deg, #eee, #ccc); border: 1px solid; border-color: var(--highlight) #999 #999 var(--highlight); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: #1a3a9a; border-radius: 1px; }
-.mini-tile.empty { background: #bbb; border-color: #888 #ddd #ddd #888; }
-.step-lbl { font-size: 9px; text-align: center; color: #555; margin-top: 1px; }
-
-.playbar { display: flex; gap: 4px; align-items: center; margin-bottom: 5px; flex-wrap: wrap; }
-.slider-row { display: flex; align-items: center; gap: 5px; }
-.slider-row input[type=range] { flex: 1; height: 4px; accent-color: var(--win-blue); }
-
-.log-msg { font-size: 11px; min-height: 16px; margin-top: 3px; }
-
-.statusbar { background: var(--face); border-top: 1px solid var(--shadow); padding: 2px 6px; display: flex; gap: 2px; }
-.status-panel { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); padding: 1px 8px; font-size: 11px; flex: 1; }
-
-.cmp-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
-.cmp-table th { background: linear-gradient(180deg, #2b5fce, #1a4fa0); color: white; padding: 3px 8px; text-align: left; font-size: 11px; font-weight: bold; }
-.cmp-table th.astar-th { background: linear-gradient(180deg, #a03820, #7a2810); }
-.cmp-table td { padding: 3px 8px; border-bottom: 1px solid #d4d0c8; }
-.cmp-table tr:hover td { background: #e8f0ff; }
-.cmp-table .metric { font-weight: bold; color: #333; }
-.cmp-table .num { font-family: 'VT323', monospace; font-size: 1.2rem; }
-.cmp-table .num.win { color: #006600; font-weight: bold; }
-.cmp-table .num.lose { color: #990000; }
-.winner-badge { display: inline-block; background: #ffd700; border: 1px solid #b8a000; color: #664400; font-size: 10px; font-weight: bold; padding: 0 4px; border-radius: 2px; margin-left: 4px; }
-
-.heuristic-box { background: #fff8e8; border: 1px solid #d4a820; border-left: 3px solid #c08010; padding: 6px 10px; margin: 6px 0; font-size: 11px; line-height: 1.6; }
-.heuristic-box b { color: #804000; }
-
-.taskbar { position: fixed; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(180deg, #245edc 0%, #1a4abf 8%, #1e52c8 50%, #1a4abf 51%, #2462d4 100%); display: flex; align-items: center; padding: 0 4px; gap: 4px; z-index: 100; border-top: 1px solid #5088e0; }
+/* TASKBAR */
+.taskbar { position: fixed; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(180deg, #245edc 0%, #1a4abf 8%, #1e52c8 50%, #1a4abf 51%, #2462d4 100%); display: flex; align-items: center; padding: 0 4px; gap: 4px; z-index: 1000; border-top: 1px solid #5088e0; }
 .start-btn { background: linear-gradient(180deg, #60c060 0%, #38a038 50%, #2c8c2c 51%, #50b050 100%); border: 1px solid #206020; border-radius: 10px 6px 6px 10px; padding: 2px 12px 2px 6px; color: white; font-weight: bold; font-size: 13px; font-family: Tahoma, sans-serif; text-shadow: 1px 1px #0006; cursor: pointer; height: 24px; display: flex; align-items: center; gap: 4px; }
 .start-btn:hover { filter: brightness(1.08); }
 .taskbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.25); margin: 0 2px; }
-.taskbar-task { background: linear-gradient(180deg, #1a4abf, #2462d4); border: 1px solid #4070c0; border-top-color: #80aae0; color: white; font-size: 11px; padding: 2px 10px; border-radius: 2px; cursor: pointer; height: 22px; display: flex; align-items: center; gap: 4px; }
-.taskbar-task.active { background: linear-gradient(180deg, #0a2880, #1a3aaa); border-top-color: #4060a0; box-shadow: inset 1px 1px 2px #0005; }
 .taskbar-clock { margin-left: auto; background: linear-gradient(180deg, #1a4abf, #2462d4); border: 1px solid #4070c0; border-top-color: #80aae0; color: white; font-size: 11px; padding: 2px 10px; height: 22px; display: flex; align-items: center; border-radius: 2px; }
 
-.balloon { display: none; position: fixed; bottom: 36px; right: 8px; background: #ffffc0; border: 1px solid #808020; padding: 8px 12px; font-size: 11px; max-width: 220px; box-shadow: 2px 2px 5px #0006; z-index: 200; border-radius: 4px 4px 4px 0; }
-.balloon.show { display: block; }
-.balloon::after { content:''; position: absolute; bottom: -8px; left: 0; border: 8px solid transparent; border-top-color: #ffffc0; border-left-color: #ffffc0; }
+/* CONTEXT MENU */
+.ctx-menu { display: none; position: fixed; background: var(--face); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); box-shadow: 2px 2px 6px #0005; z-index: 3000; min-width: 140px; padding: 2px 0; }
+.ctx-item { padding: 4px 20px 4px 28px; cursor: pointer; font-size: 11px; }
+.ctx-item:hover { background: var(--win-blue); color: white; }
+.ctx-item.bold { font-weight: bold; }
+.ctx-sep { height: 1px; background: var(--shadow); margin: 2px 4px; }
 
-::-webkit-scrollbar { width: 16px; height: 16px; }
-::-webkit-scrollbar-track { background: var(--face-dark); }
-::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #e0dcd0, #c8c4b8); border: 1px solid var(--shadow); border-top-color: var(--highlight); border-left-color: var(--highlight); }
+/* MSG DIALOG */
+.msg-overlay { display: none; position: fixed; inset: 0; background: #0005; z-index: 5000; align-items: center; justify-content: center; }
+.msg-overlay.show { display: flex; }
+.msg-win { background: var(--face); border: 2px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); box-shadow: 4px 4px 12px #0007; min-width: 260px; max-width: 340px; }
+.msg-title { background: linear-gradient(180deg, #2b5fce, #1a4fa0); color: white; font-weight: bold; font-size: 12px; padding: 3px 8px; display: flex; align-items: center; justify-content: space-between; }
+.msg-close { cursor: pointer; background: linear-gradient(#f4f0e4,#d0ccc0); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); padding: 0 5px; color: #000; font-size: 10px; }
+.msg-body { padding: 16px 20px; font-size: 12px; display: flex; gap: 12px; align-items: flex-start; }
+.msg-footer { padding: 8px; text-align: center; }
+.xp-btn { background: linear-gradient(180deg, #f4f2ec 0%, #e8e4d8 40%, #d8d4c8 41%, #e4e0d4 100%); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); padding: 3px 24px; font-family: Tahoma, sans-serif; font-size: 11px; cursor: pointer; border-radius: 3px; }
+.xp-btn:hover { background: linear-gradient(180deg, #fffce8, #ffe8a0 40%, #f0d870 41%, #ffe0a0); }
 </style>
 </head>
 <body>
 
-<div class="desktop-bar">
-  <div class="desk-icon"><div class="desk-icon-img">🧩</div><div class="desk-icon-lbl">8 Puzzle Solver</div></div>
-  <div class="desk-icon"><div class="desk-icon-img">📂</div><div class="desk-icon-lbl">Meus Documentos</div></div>
-  <div class="desk-icon"><div class="desk-icon-img">🗑️</div><div class="desk-icon-lbl">Lixeira</div></div>
-</div>
-
-<div class="window">
-  <div class="titlebar">
-    <div class="titlebar-icon">🧩</div>
-    <div class="titlebar-text">8 Puzzle Solver v2.0 — BFS &amp; A* (Distância Manhattan)</div>
-    <div class="titlebar-btns">
-      <div class="tb-btn">_</div>
-      <div class="tb-btn">□</div>
-      <div class="tb-btn close">✕</div>
-    </div>
+<div class="desktop" id="desktop">
+  <div class="desk-icon" id="icon-puzzle"
+       ondblclick="openApp('puzzle/index.html')"
+       onclick="selectIcon('icon-puzzle')"
+       oncontextmenu="showCtx(event,'puzzle/index.html')">
+    <div class="desk-icon-img">🧩</div>
+    <div class="desk-icon-lbl">8 Puzzle Solver</div>
   </div>
-
-  <div class="menubar">
-    <div class="menu-item">Arquivo</div>
-    <div class="menu-item">Editar</div>
-    <div class="menu-item">Exibir</div>
-    <div class="menu-item">Algoritmo</div>
-    <div class="menu-item">Ajuda</div>
+  <div class="desk-icon" id="icon-queens"
+       ondblclick="openApp('queens/index.html')"
+       onclick="selectIcon('icon-queens')"
+       oncontextmenu="showCtx(event,'queens/index.html')">
+    <div class="desk-icon-img">♛</div>
+    <div class="desk-icon-lbl">8 Rainhas</div>
   </div>
-
-  <div class="toolbar">
-    <span>Estado inicial:</span>
-    <input class="xp-input" type="text" id="inputState" value="582073146" placeholder="Ex: 123456708 ou 1 2 3 4 5 6 7 0 8">
-    <select class="xp-select" id="presetSel" onchange="loadPreset(this.value)">
-      <option value="">— Exemplos —</option>
-      <option value="123450786">Fácil (1 mov)</option>
-      <option value="120453786">Simples (2 mov)</option>
-      <option value="152483706">Médio (5 mov)</option>
-      <option value="052183476">Médio (8 mov)</option>
-      <option value="582073146">Difícil (13 mov)</option>
-      <option value="870542163">Difícil (20 mov)</option>
-      <option value="867254301">Muito difícil (31 mov)</option>
-      <option value="123456870">Sem solução ❌</option>
-    </select>
-    <div class="sep-v"></div>
-    <button class="xp-btn primary" onclick="solveAll()">▶ Resolver</button>
-    <button class="xp-btn" onclick="resetAll()">✕ Limpar</button>
+  <div class="desk-icon" id="icon-docs"
+       onclick="selectIcon('icon-docs')"
+       ondblclick="showMsg('Meus Documentos está vazio.')">
+    <div class="desk-icon-img">📁</div>
+    <div class="desk-icon-lbl">Meus Documentos</div>
   </div>
-
-  <div class="tabs-bar">
-    <div class="tab active" id="tab-bfs"     onclick="switchTab('bfs')">🔵 BFS</div>
-    <div class="tab"        id="tab-astar"   onclick="switchTab('astar')">🔴 A* (Manhattan)</div>
-    <div class="tab"        id="tab-compare" onclick="switchTab('compare')">📊 Comparativo</div>
-  </div>
-
-  <!-- ══ TAB BFS ══ -->
-  <div class="tab-panel active" id="panel-bfs">
-    <div class="content">
-      <div>
-        <div class="inset">
-          <div class="inset-title">🔲 Tabuleiro — BFS</div>
-          <div class="inset-body">
-            <div class="puzzle-grid" id="bigPuzzle"></div>
-            <div class="move-display" id="moveDisplay">AGUARDANDO...</div>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div class="inset">
-          <div class="inset-title">📊 Estatísticas — Busca em Largura (BFS)</div>
-          <div class="inset-body">
-            <table class="stats-table">
-              <tr><td class="lbl">Movimentos:</td>      <td class="val" id="statMoves">—</td></tr>
-              <tr><td class="lbl">Estados testados:</td> <td class="val" id="statTested">—</td></tr>
-              <tr><td class="lbl">Tempo (ms):</td>       <td class="val" id="statTime">—</td></tr>
-              <tr><td class="lbl">Profundidade:</td>     <td class="val" id="statDepth">—</td></tr>
-            </table>
-            <div style="margin-top:5px;font-size:10px;color:#555;">Progresso:</div>
-            <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
-            <div class="log-msg" id="logMsg" style="color:#000080;">Pronto. Informe um estado e clique em Resolver.</div>
-          </div>
-        </div>
-        <div class="inset">
-          <div class="inset-title">🎮 Reprodução — BFS</div>
-          <div class="inset-body">
-            <div class="playbar">
-              <button class="xp-btn" onclick="goToStep(0)">|◀</button>
-              <button class="xp-btn" onclick="stepBack()">◀</button>
-              <button class="xp-btn primary" id="playBtn" onclick="togglePlay()">▶ Play</button>
-              <button class="xp-btn" onclick="stepFwd()">▶</button>
-              <button class="xp-btn" onclick="goToStep(solution.length-1)">▶|</button>
-            </div>
-            <div class="slider-row">
-              <span>Passo:</span>
-              <input type="range" id="slider" min="0" max="0" value="0" oninput="goToStep(+this.value)">
-              <b id="stepLabel" style="color:#0000cc;min-width:40px">0/0</b>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="padding:0 8px 8px">
-      <div class="inset">
-        <div class="inset-title">🗺️ Caminho da Solução — BFS</div>
-        <div class="inset-body" style="padding:4px;">
-          <div class="steps-outer">
-            <div class="steps-inner" id="stepsInner"><i style="color:#aaa;font-size:11px;line-height:80px;padding:0 12px">Aguardando solução...</i></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ TAB A* ══ -->
-  <div class="tab-panel" id="panel-astar">
-    <div class="content">
-      <div>
-        <div class="inset">
-          <div class="inset-title astar-title">🔲 Tabuleiro — A*</div>
-          <div class="inset-body">
-            <div class="puzzle-grid" id="bigPuzzleAS"></div>
-            <div class="move-display" id="moveDisplayAS" style="color:#ff9900;text-shadow:0 0 10px #ff990099;">AGUARDANDO...</div>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div class="inset">
-          <div class="inset-title astar-title">📊 Estatísticas — A* (Distância Manhattan)</div>
-          <div class="inset-body">
-            <table class="stats-table">
-              <tr><td class="lbl">Movimentos:</td>        <td class="val" id="asStatMoves">—</td></tr>
-              <tr><td class="lbl">Estados testados:</td>   <td class="val" id="asStatTested">—</td></tr>
-              <tr><td class="lbl">Tempo (ms):</td>         <td class="val" id="asStatTime">—</td></tr>
-              <tr><td class="lbl">Profundidade:</td>       <td class="val" id="asStatDepth">—</td></tr>
-            </table>
-            <div style="margin-top:5px;font-size:10px;color:#555;">Progresso:</div>
-            <div class="progress-wrap"><div class="progress-bar astar-bar" id="asProgressBar"></div></div>
-            <div class="log-msg" id="asLogMsg" style="color:#804000;">Pronto. Informe um estado e clique em Resolver.</div>
-            <div class="heuristic-box" style="margin-top:6px;">
-              <b>Heurística: Distância Manhattan</b><br>
-              h(n) = Σ (|linha_atual − linha_alvo| + |col_atual − col_alvo|)<br>
-              Admissível e consistente → garante solução ótima.
-            </div>
-          </div>
-        </div>
-        <div class="inset">
-          <div class="inset-title astar-title">🎮 Reprodução — A*</div>
-          <div class="inset-body">
-            <div class="playbar">
-              <button class="xp-btn" onclick="goToStepAS(0)">|◀</button>
-              <button class="xp-btn" onclick="stepBackAS()">◀</button>
-              <button class="xp-btn primary" id="playBtnAS" onclick="togglePlayAS()">▶ Play</button>
-              <button class="xp-btn" onclick="stepFwdAS()">▶</button>
-              <button class="xp-btn" onclick="goToStepAS(solutionAS.length-1)">▶|</button>
-            </div>
-            <div class="slider-row">
-              <span>Passo:</span>
-              <input type="range" id="sliderAS" min="0" max="0" value="0" oninput="goToStepAS(+this.value)">
-              <b id="stepLabelAS" style="color:#804000;min-width:40px">0/0</b>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="padding:0 8px 8px">
-      <div class="inset">
-        <div class="inset-title astar-title">🗺️ Caminho da Solução — A*</div>
-        <div class="inset-body" style="padding:4px;">
-          <div class="steps-outer">
-            <div class="steps-inner" id="stepsInnerAS"><i style="color:#aaa;font-size:11px;line-height:80px;padding:0 12px">Aguardando solução...</i></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ TAB COMPARATIVO ══ -->
-  <div class="tab-panel" id="panel-compare">
-    <div style="padding:8px;">
-      <div class="heuristic-box" style="margin-bottom:8px;">
-        <b>📐 Heurística escolhida: Distância Manhattan</b><br>
-        Para cada peça, soma a distância horizontal + vertical até sua posição-alvo, ignorando o espaço vazio.
-        É <b>admissível</b> (nunca superestima) e <b>consistente</b> (satisfaz a desigualdade triangular),
-        o que garante que o A* sempre encontre a <b>solução ótima</b> com muito menos estados explorados que o BFS.
-      </div>
-      <div class="compare-content">
-        <div class="inset">
-          <div class="inset-title">🔵 BFS — Estado Final</div>
-          <div class="inset-body" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div class="puzzle-grid-mini" id="cmpBoardBFS"></div>
-            <div id="cmpMoveBFS" style="font-family:VT323,monospace;font-size:1.3rem;color:#0000cc;text-align:center;">—</div>
-          </div>
-        </div>
-        <div class="inset">
-          <div class="inset-title astar-title">🔴 A* — Estado Final</div>
-          <div class="inset-body" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div class="puzzle-grid-mini" id="cmpBoardAS"></div>
-            <div id="cmpMoveAS" style="font-family:VT323,monospace;font-size:1.3rem;color:#c04000;text-align:center;">—</div>
-          </div>
-        </div>
-      </div>
-      <div class="inset" style="margin-top:8px;">
-        <div class="inset-title">📊 Tabela Comparativa</div>
-        <div class="inset-body" style="padding:4px;">
-          <table class="cmp-table">
-            <thead>
-              <tr>
-                <th>Métrica</th>
-                <th>🔵 BFS</th>
-                <th class="astar-th">🔴 A* (Manhattan)</th>
-                <th>Vantagem</th>
-              </tr>
-            </thead>
-            <tbody id="cmpBody">
-              <tr><td colspan="4" style="text-align:center;color:#888;padding:12px;">Execute uma busca para ver a comparação.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="inset" style="margin-top:8px;">
-        <div class="inset-title">🔎 Análise da Redução</div>
-        <div class="inset-body">
-          <div id="analysisText" style="font-size:11px;line-height:1.7;color:#333;">Execute uma busca para ver a análise automática.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="statusbar">
-    <div class="status-panel" id="statusLeft">Pronto</div>
-    <div class="status-panel" style="flex:0 0 auto;min-width:180px" id="statusRight">BFS + A* | v2.0 ready</div>
+  <div class="desk-icon" id="icon-trash"
+       onclick="selectIcon('icon-trash')"
+       ondblclick="showMsg('A Lixeira está vazia.')">
+    <div class="desk-icon-img">🗑️</div>
+    <div class="desk-icon-lbl">Lixeira</div>
   </div>
 </div>
 
-<div class="balloon" id="balloon">
-  🧩 <b>8 Puzzle Solver v2.0</b><br>BFS e A* concluídos!<br><span id="balloonDetail"></span>
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item bold" onclick="ctxOpenApp()">Abrir</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="hideCtx()">Criar Atalho</div>
+  <div class="ctx-item" onclick="hideCtx()">Renomear</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="hideCtx()">Propriedades</div>
+</div>
+
+<div class="msg-overlay" id="msgOverlay">
+  <div class="msg-win">
+    <div class="msg-title">
+      <span>🪟 Windows XP</span>
+      <span class="msg-close" onclick="document.getElementById('msgOverlay').classList.remove('show')">✕</span>
+    </div>
+    <div class="msg-body"><span style="font-size:28px">ℹ️</span><span id="msgText"></span></div>
+    <div class="msg-footer"><button class="xp-btn" onclick="document.getElementById('msgOverlay').classList.remove('show')">OK</button></div>
+  </div>
 </div>
 
 <div class="taskbar">
   <div class="start-btn">🪟 Iniciar</div>
   <div class="taskbar-sep"></div>
-  <div class="taskbar-task active">🧩 8 Puzzle Solver v2.0</div>
-  <div class="taskbar-clock" id="clock">--:--</div>
+  <div class="taskbar-clock" id="clock">00:00</div>
 </div>
 
-<!-- Scripts separados: lógica primeiro, UI depois -->
-<script src="algorithms.js"></script>
-<script src="app.js"></script>
+<script src="desktop.js"></script>
 </body>
 </html>

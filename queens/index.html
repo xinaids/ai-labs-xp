@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>8 Rainhas — IA Solver</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --face: #ece9d8; --face-dark: #d4d0c8; --highlight: #ffffff;
+  --shadow: #808080; --dark-shadow: #404040; --win-blue: #0055ea;
+}
+html, body { width: 100%; min-height: 100vh; background: #3a6ea5; font-family: Tahoma, 'MS Sans Serif', Geneva, sans-serif; font-size: 11px; display: flex; flex-direction: column; align-items: center; padding: 12px; gap: 8px; padding-bottom: 46px; }
+.desktop-bar { width: 100%; max-width: 900px; display: flex; gap: 12px; padding: 0 4px; }
+.desk-icon { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 4px; border: 1px solid transparent; border-radius: 2px; }
+.desk-icon:hover { border-color: #88aadd; background: rgba(58,110,165,0.4); }
+.desk-icon-img { font-size: 28px; filter: drop-shadow(1px 1px 1px #0008); }
+.desk-icon-lbl { color: white; font-size: 10px; text-shadow: 1px 1px 2px #000; text-align: center; }
+.window { background: var(--face); border: 2px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); box-shadow: 2px 2px 8px rgba(0,0,0,0.6); width: 100%; max-width: 900px; }
+.titlebar { background: linear-gradient(180deg, #2b5fce 0%, #3a87d4 8%, #2166c4 50%, #1e5bb8 51%, #2a7dd4 100%); padding: 3px 5px; display: flex; align-items: center; gap: 5px; height: 26px; user-select: none; }
+.titlebar-icon { font-size: 14px; flex-shrink: 0; }
+.titlebar-text { flex: 1; color: white; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+.titlebar-btns { display: flex; gap: 2px; }
+.tb-btn { width: 20px; height: 20px; background: linear-gradient(180deg, #f4f0e4 0%, #d0ccc0 100%); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; }
+.tb-btn.close { background: linear-gradient(180deg, #e05050 0%, #b82020 100%); color: white; }
+.menubar { background: var(--face); border-bottom: 1px solid var(--face-dark); padding: 1px 4px; display: flex; }
+.menu-item { padding: 2px 8px; cursor: pointer; border-radius: 2px; }
+.menu-item:hover { background: var(--win-blue); color: white; }
+.toolbar { background: linear-gradient(180deg, #f4f1e8 0%, #e0ddd4 100%); border-bottom: 1px solid var(--shadow); padding: 4px 8px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.tabs-bar { background: var(--face-dark); border-bottom: 2px solid var(--shadow); display: flex; padding: 4px 8px 0; gap: 2px; }
+.tab { padding: 4px 14px 3px; border: 1px solid var(--shadow); border-bottom: none; border-radius: 3px 3px 0 0; cursor: pointer; background: linear-gradient(180deg, #d8d4c8, #c4c0b4); font-size: 11px; font-weight: bold; position: relative; bottom: -1px; color: #555; white-space: nowrap; }
+.tab:hover { background: linear-gradient(180deg, #e8e4d8, #d8d4c8); color: #000; }
+.tab.active { background: var(--face); border-color: var(--shadow); border-bottom-color: var(--face); color: #000; z-index: 1; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.xp-btn { background: linear-gradient(180deg, #f4f2ec 0%, #e8e4d8 40%, #d8d4c8 41%, #e4e0d4 100%); border: 1px solid; border-color: var(--highlight) var(--dark-shadow) var(--dark-shadow) var(--highlight); padding: 3px 10px; font-family: Tahoma, sans-serif; font-size: 11px; cursor: pointer; border-radius: 3px; white-space: nowrap; }
+.xp-btn:hover { background: linear-gradient(180deg, #fffce8, #ffe8a0 40%, #f0d870 41%, #ffe0a0); border-color: #b09030; }
+.xp-btn.primary { background: linear-gradient(180deg, #78c878 0%, #50b050 40%, #38a038 41%, #60c060 100%); border-color: #206020; color: white; font-weight: bold; text-shadow: 1px 1px #0006; }
+.xp-btn.primary:hover { filter: brightness(1.08); }
+.xp-btn.sa-run { background: linear-gradient(180deg, #f09858 0%, #c86028 40%, #a04010 41%, #e07838 100%); border-color: #702010; color: white; font-weight: bold; text-shadow: 1px 1px #0006; }
+.xp-btn.ga-run { background: linear-gradient(180deg, #78d878 0%, #40b040 40%, #289028 41%, #58c858 100%); border-color: #186018; color: white; font-weight: bold; text-shadow: 1px 1px #0006; }
+.xp-input-num { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: white; padding: 2px 4px; font-family: Tahoma, sans-serif; font-size: 11px; width: 64px; outline: none; }
+.sep-v { width: 1px; height: 20px; margin: 0 3px; background: linear-gradient(180deg, transparent, var(--shadow), transparent); }
+.inset { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: var(--face); box-shadow: inset 1px 1px 0 #ffffff80; }
+.inset-title { color: white; font-size: 11px; font-weight: bold; padding: 2px 8px; text-shadow: 1px 1px #0004; }
+.inset-title.hc  { background: linear-gradient(180deg, #2b5fce, #1a4fa0); }
+.inset-title.sa  { background: linear-gradient(180deg, #a03820, #7a2810); }
+.inset-title.ga  { background: linear-gradient(180deg, #206820, #145014); }
+.inset-title.cmp { background: linear-gradient(180deg, #504080, #382860); }
+.inset-body { padding: 8px; }
+.board-wrap { display: inline-block; border: 2px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); }
+.chess-board    { display: grid; grid-template-columns: repeat(8, 36px); grid-template-rows: repeat(8, 36px); }
+.chess-board.sm { display: grid; grid-template-columns: repeat(8, 24px); grid-template-rows: repeat(8, 24px); }
+.cell { display: flex; align-items: center; justify-content: center; font-size: 22px; line-height: 1; transition: background 0.2s; }
+.cell.sm { font-size: 15px; }
+.cell.light { background: #f0d9b5; } .cell.dark { background: #b58863; }
+.cell.conflict-light { background: #f07070; } .cell.conflict-dark { background: #c03030; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.stats-table td { padding: 2px 6px; }
+.stats-table tr:nth-child(odd) { background: rgba(0,0,0,0.04); }
+.stats-table .lbl { font-weight: bold; color: #333; white-space: nowrap; }
+.stats-table .val    { font-family: 'VT323', monospace; font-size: 1.3rem; color: #0000cc; }
+.stats-table .val.sa { color: #c04000; }
+.stats-table .val.ga { color: #006600; }
+.progress-wrap { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: white; height: 14px; overflow: hidden; margin: 4px 0; }
+.progress-bar { height: 100%; width: 0%; transition: width 0.3s; position: relative; overflow: hidden; }
+.progress-bar.hc-bar { background: linear-gradient(180deg, #72dc72, #40b840 45%, #28a028 46%, #58c858); }
+.progress-bar.sa-bar { background: linear-gradient(180deg, #f09050, #c86020 45%, #a04010 46%, #e07030); }
+.progress-bar.ga-bar { background: linear-gradient(180deg, #70c870, #38a038 45%, #208020 46%, #50b050); }
+.progress-bar::after { content:''; position:absolute; top:0; left:-50%; width:40px; height:100%; background: linear-gradient(90deg,transparent,#ffffff60,transparent); animation: pgshim 1.5s infinite; }
+@keyframes pgshim { from{left:-50px} to{left:calc(100% + 50px)} }
+.log-box { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: #000080; color: #00ff00; font-family: 'VT323', monospace; font-size: 1.1rem; padding: 6px 8px; height: 80px; overflow-y: auto; line-height: 1.5; }
+.params-grid { display: grid; grid-template-columns: auto auto; gap: 4px 10px; align-items: center; }
+.two-col { display: grid; grid-template-columns: auto 1fr; gap: 8px; padding: 8px; }
+@media (max-width: 560px) { .two-col { grid-template-columns: 1fr; } }
+.info-box { background: #fff8e8; border: 1px solid #d4a820; border-left: 3px solid #c08010; padding: 6px 10px; font-size: 11px; line-height: 1.6; margin: 6px 0; }
+.info-box b { color: #804000; }
+canvas.chart { width: 100%; height: 100px; display: block; border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); background: white; }
+.cmp-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.cmp-table th { color: white; padding: 3px 8px; text-align: left; font-size: 11px; font-weight: bold; }
+.cmp-table th.meta-th { background: linear-gradient(180deg, #504080, #382860); }
+.cmp-table th.hc-th   { background: linear-gradient(180deg, #2b5fce, #1a4fa0); }
+.cmp-table th.sa-th   { background: linear-gradient(180deg, #a03820, #7a2810); }
+.cmp-table th.ga-th   { background: linear-gradient(180deg, #206820, #145014); }
+.cmp-table td { padding: 3px 8px; border-bottom: 1px solid #d4d0c8; }
+.cmp-table tr:hover td { background: #e8f0ff; }
+.cmp-table .metric { font-weight: bold; color: #333; }
+.cmp-table .num { font-family: 'VT323', monospace; font-size: 1.2rem; }
+.cmp-table .num.win  { color: #006600; font-weight: bold; }
+.cmp-table .num.lose { color: #990000; }
+.taskbar { position: fixed; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(180deg, #245edc 0%, #1a4abf 8%, #1e52c8 50%, #1a4abf 51%, #2462d4 100%); display: flex; align-items: center; padding: 0 4px; gap: 4px; z-index: 100; border-top: 1px solid #5088e0; }
+.start-btn { background: linear-gradient(180deg, #60c060 0%, #38a038 50%, #2c8c2c 51%, #50b050 100%); border: 1px solid #206020; border-radius: 10px 6px 6px 10px; padding: 2px 12px 2px 6px; color: white; font-weight: bold; font-size: 13px; font-family: Tahoma, sans-serif; text-shadow: 1px 1px #0006; cursor: pointer; height: 24px; display: flex; align-items: center; gap: 4px; }
+.start-btn:hover { filter: brightness(1.08); }
+.taskbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.25); margin: 0 2px; }
+.taskbar-task { background: linear-gradient(180deg, #1a4abf, #2462d4); border: 1px solid #4070c0; border-top-color: #80aae0; color: white; font-size: 11px; padding: 2px 10px; border-radius: 2px; cursor: pointer; height: 22px; display: flex; align-items: center; gap: 4px; }
+.taskbar-task.active { background: linear-gradient(180deg, #0a2880, #1a3aaa); border-top-color: #4060a0; box-shadow: inset 1px 1px 2px #0005; }
+.taskbar-clock { margin-left: auto; background: linear-gradient(180deg, #1a4abf, #2462d4); border: 1px solid #4070c0; border-top-color: #80aae0; color: white; font-size: 11px; padding: 2px 10px; height: 22px; display: flex; align-items: center; border-radius: 2px; }
+.statusbar { background: var(--face); border-top: 1px solid var(--shadow); padding: 2px 6px; display: flex; gap: 2px; }
+.status-panel { border: 1px solid; border-color: var(--dark-shadow) var(--highlight) var(--highlight) var(--dark-shadow); padding: 1px 8px; font-size: 11px; flex: 1; }
+::-webkit-scrollbar { width: 16px; height: 16px; }
+::-webkit-scrollbar-track { background: var(--face-dark); }
+::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #e0dcd0, #c8c4b8); border: 1px solid var(--shadow); border-top-color: var(--highlight); border-left-color: var(--highlight); }
+</style>
+</head>
+<body>
+
+<div class="desktop-bar">
+  <div class="desk-icon" ondblclick="location.href='../index.html'"><div class="desk-icon-img">🖥️</div><div class="desk-icon-lbl">Desktop</div></div>
+  <div class="desk-icon" ondblclick="location.href='../puzzle/index.html'"><div class="desk-icon-img">🧩</div><div class="desk-icon-lbl">8 Puzzle</div></div>
+  <div class="desk-icon" style="border-color:#88aadd;background:rgba(58,110,165,0.4)"><div class="desk-icon-img">♛</div><div class="desk-icon-lbl">8 Rainhas</div></div>
+</div>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="titlebar-icon">♛</div>
+    <div class="titlebar-text">8 Rainhas — Hill Climbing · Simulated Annealing · Algoritmo Genético</div>
+    <div class="titlebar-btns">
+      <div class="tb-btn">_</div><div class="tb-btn">□</div>
+      <div class="tb-btn close" onclick="location.href='../index.html'">✕</div>
+    </div>
+  </div>
+  <div class="menubar">
+    <div class="menu-item">Arquivo</div><div class="menu-item">Editar</div>
+    <div class="menu-item">Exibir</div><div class="menu-item">Algoritmo</div><div class="menu-item">Ajuda</div>
+  </div>
+  <div class="toolbar">
+    <button class="xp-btn primary" onclick="runAll()">▶ Executar Todos</button>
+    <button class="xp-btn" onclick="stopAll()">■ Parar</button>
+    <div class="sep-v"></div>
+    <button class="xp-btn" onclick="runBatch(10)">🔁 10 Execuções</button>
+    <button class="xp-btn" onclick="resetAll()">✕ Limpar</button>
+  </div>
+
+  <div class="tabs-bar">
+    <div class="tab active" id="tab-hc"  onclick="switchTab('hc')">🏔️ Hill Climbing</div>
+    <div class="tab"        id="tab-sa"  onclick="switchTab('sa')">🌡️ Simulated Annealing</div>
+    <div class="tab"        id="tab-ga"  onclick="switchTab('ga')">🧬 Algoritmo Genético</div>
+    <div class="tab"        id="tab-cmp" onclick="switchTab('cmp')">📊 Comparativo</div>
+  </div>
+
+  <!-- HILL CLIMBING -->
+  <div class="tab-panel active" id="panel-hc">
+    <div class="two-col">
+      <div>
+        <div class="inset"><div class="inset-title hc">♟️ Tabuleiro — Hill Climbing</div>
+          <div class="inset-body" style="padding:6px;"><div class="board-wrap"><div class="chess-board" id="board-hc"></div></div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="inset"><div class="inset-title hc">⚙️ Parâmetros</div>
+          <div class="inset-body">
+            <div class="params-grid">
+              <label>Máx. reinícios:</label><input class="xp-input-num" type="number" id="hc-restarts" value="100" min="1" max="10000">
+              <label>Máx. iter./reinício:</label><input class="xp-input-num" type="number" id="hc-maxiter" value="1000" min="10" max="50000">
+            </div>
+            <div style="margin-top:6px;"><button class="xp-btn primary" onclick="runHC()">▶ Executar HC</button></div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title hc">📊 Estatísticas</div>
+          <div class="inset-body">
+            <table class="stats-table">
+              <tr><td class="lbl">Solução:</td>   <td class="val"    id="hc-sol">—</td></tr>
+              <tr><td class="lbl">Conflitos:</td> <td class="val"    id="hc-conf">—</td></tr>
+              <tr><td class="lbl">Iterações:</td> <td class="val"    id="hc-iters">—</td></tr>
+              <tr><td class="lbl">Reinícios:</td> <td class="val"    id="hc-rest">—</td></tr>
+              <tr><td class="lbl">Tempo (ms):</td><td class="val"    id="hc-time">—</td></tr>
+            </table>
+            <div style="margin-top:5px;font-size:10px;color:#555;">Progresso:</div>
+            <div class="progress-wrap"><div class="progress-bar hc-bar" id="hc-prog"></div></div>
+            <div id="hc-status" style="font-size:11px;color:#000080;margin-top:3px;">Aguardando...</div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title hc">📜 Log</div>
+          <div class="inset-body" style="padding:4px;"><div class="log-box" id="hc-log"></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 8px 8px">
+      <div class="inset"><div class="inset-title hc">📈 Curva de Conflitos</div>
+        <div class="inset-body" style="padding:4px;"><canvas id="hc-chart" class="chart"></canvas></div>
+      </div>
+      <div class="info-box" style="margin-top:6px;">
+        <b>Subida de Encosta com Reinício Aleatório</b><br>
+        A cada iteração, gera todos os vizinhos (mover uma rainha em sua coluna) e escolhe o de menor conflito. Se ficar preso num ótimo local, reinicia com estado aleatório. Heurística: <b>número de pares de rainhas se atacando</b> (objetivo: 0).
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMULATED ANNEALING -->
+  <div class="tab-panel" id="panel-sa">
+    <div class="two-col">
+      <div>
+        <div class="inset"><div class="inset-title sa">♟️ Tabuleiro — Simulated Annealing</div>
+          <div class="inset-body" style="padding:6px;"><div class="board-wrap"><div class="chess-board" id="board-sa"></div></div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="inset"><div class="inset-title sa">⚙️ Parâmetros</div>
+          <div class="inset-body">
+            <div class="params-grid">
+              <label>Temp. inicial (T₀):</label>      <input class="xp-input-num" type="number" id="sa-t0"       value="30"    min="1"      max="1000"   step="1">
+              <label>Taxa resfriamento (α):</label>   <input class="xp-input-num" type="number" id="sa-alpha"    value="0.995" min="0.8"    max="0.9999" step="0.001">
+              <label>Temp. mínima:</label>            <input class="xp-input-num" type="number" id="sa-tmin"     value="0.01"  min="0.0001" max="1"       step="0.001">
+              <label>Reinícios:</label>               <input class="xp-input-num" type="number" id="sa-restarts" value="5"     min="1"      max="100">
+            </div>
+            <div style="margin-top:6px;"><button class="xp-btn sa-run" onclick="runSA()">▶ Executar SA</button></div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title sa">📊 Estatísticas</div>
+          <div class="inset-body">
+            <table class="stats-table">
+              <tr><td class="lbl">Solução:</td>     <td class="val sa" id="sa-sol">—</td></tr>
+              <tr><td class="lbl">Conflitos:</td>   <td class="val sa" id="sa-conf">—</td></tr>
+              <tr><td class="lbl">Iterações:</td>   <td class="val sa" id="sa-iters">—</td></tr>
+              <tr><td class="lbl">Temp. final:</td> <td class="val sa" id="sa-tfinal">—</td></tr>
+              <tr><td class="lbl">Tempo (ms):</td>  <td class="val sa" id="sa-time">—</td></tr>
+            </table>
+            <div style="margin-top:5px;font-size:10px;color:#555;">Progresso:</div>
+            <div class="progress-wrap"><div class="progress-bar sa-bar" id="sa-prog"></div></div>
+            <div id="sa-status" style="font-size:11px;color:#804000;margin-top:3px;">Aguardando...</div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title sa">📜 Log</div>
+          <div class="inset-body" style="padding:4px;"><div class="log-box" id="sa-log"></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 8px 8px">
+      <div class="inset"><div class="inset-title sa">📈 Curva de Conflitos × Temperatura</div>
+        <div class="inset-body" style="padding:4px;"><canvas id="sa-chart" class="chart"></canvas></div>
+      </div>
+      <div class="info-box" style="margin-top:6px;border-left-color:#a04020;">
+        <b>Têmpera Simulada (Simulated Annealing)</b><br>
+        A cada passo, escolhe um vizinho aleatório. Aceita se for melhor; se for pior, aceita com probabilidade e<sup>−ΔE/T</sup>. A temperatura T diminui gradualmente (T *= α), convergindo para a solução.
+      </div>
+    </div>
+  </div>
+
+  <!-- GENÉTICO -->
+  <div class="tab-panel" id="panel-ga">
+    <div class="two-col">
+      <div>
+        <div class="inset"><div class="inset-title ga">♟️ Tabuleiro — Algoritmo Genético</div>
+          <div class="inset-body" style="padding:6px;"><div class="board-wrap"><div class="chess-board" id="board-ga"></div></div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="inset"><div class="inset-title ga">⚙️ Parâmetros</div>
+          <div class="inset-body">
+            <div class="params-grid">
+              <label>Tamanho da população:</label><input class="xp-input-num" type="number" id="ga-pop"   value="200"  min="10"    max="2000">
+              <label>Máx. gerações:</label>        <input class="xp-input-num" type="number" id="ga-gens"  value="2000" min="10"    max="50000">
+              <label>Taxa de mutação:</label>      <input class="xp-input-num" type="number" id="ga-mut"   value="0.05" min="0.001" max="0.5"  step="0.01">
+              <label>Taxa de crossover:</label>    <input class="xp-input-num" type="number" id="ga-cross" value="0.85" min="0.1"   max="1"    step="0.05">
+              <label>Elitismo (%):</label>         <input class="xp-input-num" type="number" id="ga-elite" value="5"    min="0"     max="50">
+              <label>Torneio (k):</label>          <input class="xp-input-num" type="number" id="ga-tourn" value="5"    min="2"     max="20">
+            </div>
+            <div style="margin-top:6px;"><button class="xp-btn ga-run" onclick="runGA()">▶ Executar GA</button></div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title ga">📊 Estatísticas</div>
+          <div class="inset-body">
+            <table class="stats-table">
+              <tr><td class="lbl">Solução:</td>        <td class="val ga" id="ga-sol">—</td></tr>
+              <tr><td class="lbl">Conflitos:</td>      <td class="val ga" id="ga-conf">—</td></tr>
+              <tr><td class="lbl">Geração:</td>        <td class="val ga" id="ga-gen">—</td></tr>
+              <tr><td class="lbl">Melhor fitness:</td> <td class="val ga" id="ga-fit">—</td></tr>
+              <tr><td class="lbl">Tempo (ms):</td>     <td class="val ga" id="ga-time">—</td></tr>
+            </table>
+            <div style="margin-top:5px;font-size:10px;color:#555;">Progresso:</div>
+            <div class="progress-wrap"><div class="progress-bar ga-bar" id="ga-prog"></div></div>
+            <div id="ga-status" style="font-size:11px;color:#206020;margin-top:3px;">Aguardando...</div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title ga">📜 Log</div>
+          <div class="inset-body" style="padding:4px;"><div class="log-box" id="ga-log"></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 8px 8px">
+      <div class="inset"><div class="inset-title ga">📈 Evolução do Fitness (melhor/médio)</div>
+        <div class="inset-body" style="padding:4px;"><canvas id="ga-chart" class="chart"></canvas></div>
+      </div>
+      <div class="info-box" style="margin-top:6px;border-left-color:#206820;">
+        <b>Algoritmo Genético</b><br>
+        Mantém uma população de cromossomos (arrays de 8 valores = linha de cada rainha por coluna). A cada geração: <b>seleção por torneio</b>, <b>crossover de um ponto</b>, <b>mutação por gene</b> e <b>elitismo</b>. Fitness = 28 − conflitos.
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARATIVO -->
+  <div class="tab-panel" id="panel-cmp">
+    <div style="padding:8px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;">
+        <div class="inset"><div class="inset-title hc">🏔️ HC — Melhor tabuleiro</div>
+          <div class="inset-body" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div class="board-wrap"><div class="chess-board sm" id="cmp-board-hc"></div></div>
+            <div id="cmp-label-hc" style="font-family:VT323,monospace;font-size:1.2rem;color:#0000cc;text-align:center;">—</div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title sa">🌡️ SA — Melhor tabuleiro</div>
+          <div class="inset-body" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div class="board-wrap"><div class="chess-board sm" id="cmp-board-sa"></div></div>
+            <div id="cmp-label-sa" style="font-family:VT323,monospace;font-size:1.2rem;color:#c04000;text-align:center;">—</div>
+          </div>
+        </div>
+        <div class="inset"><div class="inset-title ga">🧬 GA — Melhor tabuleiro</div>
+          <div class="inset-body" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div class="board-wrap"><div class="chess-board sm" id="cmp-board-ga"></div></div>
+            <div id="cmp-label-ga" style="font-family:VT323,monospace;font-size:1.2rem;color:#006600;text-align:center;">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="inset" style="margin-bottom:8px;">
+        <div class="inset-title cmp">📊 Tabela Comparativa</div>
+        <div class="inset-body" style="padding:4px;">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th class="meta-th">Métrica</th>
+                <th class="hc-th">🏔️ Hill Climbing</th>
+                <th class="sa-th">🌡️ Simul. Annealing</th>
+                <th class="ga-th">🧬 Alg. Genético</th>
+              </tr>
+            </thead>
+            <tbody id="cmp-body">
+              <tr><td colspan="4" style="text-align:center;color:#888;padding:12px;">Execute os algoritmos para ver comparação.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="inset" style="margin-bottom:8px;">
+        <div class="inset-title cmp">🔎 Análise Automática</div>
+        <div class="inset-body"><div id="cmp-analysis" style="font-size:11px;line-height:1.8;color:#333;">Execute os algoritmos para ver análise.</div></div>
+      </div>
+      <div class="inset">
+        <div class="inset-title cmp">📈 Comparativo Tempo × Conflitos</div>
+        <div class="inset-body" style="padding:4px;"><canvas id="cmp-chart" class="chart" style="height:120px;"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="status-panel" id="status-left">Pronto</div>
+    <div class="status-panel" style="flex:0 0 auto;min-width:220px" id="status-right">8 Rainhas · HC + SA + GA · v1.0</div>
+  </div>
+</div>
+
+<div class="taskbar">
+  <div class="start-btn" onclick="location.href='../index.html'">🪟 Iniciar</div>
+  <div class="taskbar-sep"></div>
+  <div class="taskbar-task active">♛ 8 Rainhas — IA Solver</div>
+  <div class="taskbar-clock" id="clock">00:00</div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
